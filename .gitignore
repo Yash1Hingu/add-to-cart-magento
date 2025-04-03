@@ -1,0 +1,45 @@
+# Magento 2
+/vendor/
+/var/
+/generated/
+/pub/static/
+/pub/media/
+/app/etc/env.php
+/app/etc/di.xml
+/.idea/
+/composer.phar
+/.phpunit.result.cache
+/.vagrant/
+/phpstan.neon
+/.php_cs.cache
+/.htaccess
+/.gitmodules
+/.git/
+*.log
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Magento 2 Dev/Environment
+composer.lock
+composer.json
+.env
+
+# Docker
+docker-compose.override.yml
+.docker/
+
+# Node modules
+/node_modules/
+
+# IDE files
+.idea/
+/.vscode/
+
+# Backup files
+*.bak
+*.old
+
+# Nginx/Apache logs
+/logs/*.log

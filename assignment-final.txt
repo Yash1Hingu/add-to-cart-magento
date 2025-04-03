@@ -1,0 +1,7 @@
+Magento 2 Final Assignment
+
+1. Create attributes and attribute sets for the products.
+2. Create 2 configurable products and its Simple products.(Product that have customization options as per your choice like color,size etc)
+3. Create coupon code which can apply 5% discount for the product into cart.
+4. Test the product by adding it to cart, and complete checkout process.
+5. Add any Extension and set up configurations from admin side.(Extension module can be  download as per the choice or can use attached extention module)

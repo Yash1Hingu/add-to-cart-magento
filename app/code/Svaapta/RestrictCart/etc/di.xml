@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <!-- Define a logger class with our custom handler -->
+    <type name="Svaapta\RestrictCart\Logger\Logger">
+        <arguments>
+            <!-- Custom name for the logger (used internally by Monolog) -->
+            <argument name="name" xsi:type="string">svaapta_restrict_cart</argument>
+            <argument name="handlers" xsi:type="array">
+                <!-- Use our custom handler for logging -->
+                <item name="default" xsi:type="object">Svaapta\RestrictCart\Logger\Handler</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Order Place After Observer -->
+    <type name="Svaapta\RestrictCart\Observer\OrderPlaceAfter">
+        <arguments>
+            <argument name="logger" xsi:type="object">Svaapta\RestrictCart\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <!-- Restricted Cart Update Observer. -->
+    <type name="Svaapta\RestrictCart\Observer\RestrictCartUpdateObserver">
+        <arguments>
+            <argument name="logger" xsi:type="object">Svaapta\RestrictCart\Logger\Logger</argument>
+            <argument name="customerSession" xsi:type="object">Magento\Customer\Model\Session</argument>
+            <argument name="messageManager" xsi:type="object">Magento\Framework\Message\ManagerInterface</argument>
+        </arguments>
+    </type>
+
+    <!-- Restricted Cart Add Observer. -->
+    <type name="Svaapta\RestrictCart\Observer\RestrictAddToCartObserver">
+        <arguments>
+            <argument name="logger" xsi:type="object">Svaapta\RestrictCart\Logger\Logger</argument>
+            <argument name="messageManager" xsi:type="object">Magento\Framework\Message\ManagerInterface</argument>
+            <argument name="cart" xsi:type="object">Magento\Checkout\Model\Cart</argument>
+            <argument name="customerSession" xsi:type="object">Magento\Customer\Model\Session</argument>
+        </arguments>
+    </type>
+
+    <!-- Restricted Cart Update Observer. -->
+    <type name="Svaapta\RestrictCart\Observer\RestrictCartUpdate">
+        <arguments>
+            <argument name="logger" xsi:type="object">Svaapta\RestrictCart\Logger\Logger</argument>
+            <argument name="messageManager" xsi:type="object">Magento\Framework\Message\ManagerInterface</argument>
+        </arguments>
+    </type>
+
+</config>
