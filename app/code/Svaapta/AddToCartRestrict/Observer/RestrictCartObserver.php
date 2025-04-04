@@ -118,7 +118,7 @@ class RestrictCartObserver implements ObserverInterface
         
         $productQty = isset($observer->getEvent()->getData()['info']['qty']) ? (int) $observer->getEvent()->getData()['info']['qty'] : 1;
 
-        $this->logger->info('Product Data: ' . print_r($observer->getEvent()->getProduct()->getTypeInstance()->getAssociatedProducts($product), true));
+        // $this->logger->info('Product Data: ' . print_r($observer->getEvent()->getProduct()->getTypeInstance()->getAssociatedProducts($product), true));
 
         // // log length
         // $this->logger->info('Product Data Length: ' . count($observer->getEvent()->getProduct()->getTypeInstance()->getAssociatedProducts($product)));
@@ -145,35 +145,36 @@ class RestrictCartObserver implements ObserverInterface
 
 
         // log the product qty
-        // $this->logger->info('Product Qty: ' . $productQty);
-
-        // Check if the current user is in the restricted group (e.g., Guest or General)
-        $customerGroupId = $this->customerSession->getCustomerGroupId();
-        $restrictedGroups = [0, 1]; // Example: 0 - Guest, 1 - General Customer Group
+        // $this->logger->info('Product Qty: ' . $productQty)
         
         
         // $this->logger->info('Customer Group ID: ' . $customerGroupId);
         
-        if (in_array($customerGroupId, $restrictedGroups)) {
-            // Calculate the total quantity in the cart
-            $currentQty = 0;
-            foreach ($quote->getAllItems() as $item) {
-                $currentQty += $item->getQty();
+
+        $currentQty = 0;
+        foreach ($quote->getAllItems() as $cartItem) {
+            // Skip child items (belonging to bundle or configurable)
+            if ($cartItem->getParentItemId()) {
+                continue;
             }
-
-            // Check if the new addition will exceed the allowed limit
-            if ($currentQty + $productQty > $allowedQtyLimit) {
-                // Prevent adding the item to the cart
-                $this->messageManager->addWarningMessage(
-                    __('You cannot add more than 5 items to your cart.')
-                );
-
-                // Optionally, throw an exception or revert changes
-                throw new CartUpdateRestrictionException(__('You cannot add Product.'));
-            }
-
-            // $this->logger->info('Current Cart Quantity: ' . $currentQty);
+        
+            // Count only the parent item qty (1 bundle = 1 item)
+            $currentQty += $cartItem->getQty();
         }
+
+
+        // LOG CURRENT QUANTITY
+        $this->logger->info('ADD:: Current Cart Quantity: ' . $currentQty);
+        // Check if the new addition will exceed the allowed limit
+        if ($currentQty + $productQty > $allowedQtyLimit) {
+            // Prevent adding the item to the cart
+            $this->messageManager->addWarningMessage(
+                __('You cannot add more than 5 items to your cart.')
+            );
+            // Optionally, throw an exception or revert changes
+            throw new CartUpdateRestrictionException(__('You cannot add Product.'));
+        }
+        // $this->logger->info('Current Cart Quantity: ' . $currentQty);
     }
 
     /**
@@ -188,55 +189,55 @@ class RestrictCartObserver implements ObserverInterface
         $this->logger->info('Restricted Cart Update Observer Trigger.');
 
         $quote = $observer->getEvent()->getCart()->getQuote();
-        $this->logger->info('Cart Data: ' . print_r($quote->getAllItems(), true));
+        // $this->logger->info("UO:: Cart Data: " . print_r($quote->getAllItems(), true));
 
         // Get update info and the item id being updated
         $info = $observer->getEvent()->getInfo()->getData();
         $itemId = key($info);
         $newQty = $info[$itemId]['qty']; // New quantity entered by the customer
 
-        $this->logger->info('New Qty: ' . $newQty);
-        $this->logger->info('Current Customer Group: ' . $this->customerSession->getCustomerGroupId());
-        $this->logger->info('Item ID: ' . $itemId);
-
-        $currentGroupId = $this->customerSession->getCustomerGroupId();
+        // $this->logger->info('UO:: New Qty: ' . $newQty);
+        // $this->logger->info('UO:: Current Customer Group: ' . $this->customerSession->getCustomerGroupId());
+        // $this->logger->info('UO:: Item ID: ' . $itemId);
 
         // Apply restriction logic for allowed customer groups (Guest and General)
-        if (in_array($currentGroupId, $this->restrictedGroups)) {
-            $this->logger->info('Applying cart update restrictions.');
-
-            $currentQty = 0;
-            $originalQty = 0;
-
-            // Calculate total quantity excluding the item being updated
-            foreach ($quote->getAllItems() as $item) {
-                if ($item->getId() == $itemId) {
-                    $originalQty = $item->getQty(); // Save original quantity
-                } else {
-                    $currentQty += $item->getQty();
+        $this->logger->info('Applying cart update restrictions.');
+        $currentQty = 0;
+        $originalQty = 0;
+        // Calculate total quantity excluding the item being updated
+        foreach ($quote->getAllItems() as $item) {
+            if ($item->getId() == $itemId) {
+                $originalQty = $item->getQty(); // Save original quantity
+            } else {
+                if ($item->getParentItemId()) {
+                    continue;
                 }
+                
+                if($item->getHasChildren()){
+                    $totalQty = $item->getQty();
+                    continue;
+                }
+                
+                // Count only the parent item qty (1 bundle = 1 item)
+                $currentQty += $item->getQty();
             }
-
-            $this->logger->info('Total Qty from other items: ' . $currentQty);
-
-            // Prevent update if total quantity would exceed the maximum allowed
-            if ($currentQty + $newQty > $this->maxAllowedQty) {
-                $this->messageManager->addWarningMessage(
-                    __('You can only have a maximum of %1 items in your cart.', $this->maxAllowedQty)
-                );
-
-                $this->logger->warning(
-                    sprintf(
-                        'Blocked cart update: Attempt to update item ID %s to qty %s when current cart has %s items.',
-                        $itemId,
-                        $newQty,
-                        $currentQty
-                    )
-                );
-
-                // Optionally, logic to revert the cart quantity can be added here.
-                throw new CartUpdateRestrictionException(__('Cart quantity limit exceeded.'));
-            }
+        }
+        $this->logger->info('UO:: Total Qty from other items: ' . $currentQty);
+        // Prevent update if total quantity would exceed the maximum allowed
+        if ($currentQty + $newQty > $this->maxAllowedQty) {
+            $this->messageManager->addWarningMessage(
+                __('You can only have a maximum of %1 items in your cart.', $this->maxAllowedQty)
+            );
+            $this->logger->warning(
+                sprintf(
+                    'Blocked cart update: Attempt to update item ID %s to qty %s when current cart has %s items.',
+                    $itemId,
+                    $newQty,
+                    $currentQty
+                )
+            );
+            // Optionally, logic to revert the cart quantity can be added here.
+            throw new CartUpdateRestrictionException(__('Cart quantity limit exceeded.'));
         }
     }
 
@@ -256,26 +257,47 @@ class RestrictCartObserver implements ObserverInterface
 
         $this->logger->info('Restricted Cart Update Trigger.');
 
+        // LOG OBSERVER INFO
+        // $this->logger->info('QUOTE:: Observer Data: ' . print_r($observer->getData(), true));
+
         // Retrieve the quote item and related customer details
         $item = $observer->getEvent()->getData('item');
         $quote = $item->getQuote();
         $customer = $quote->getCustomer();
 
-        $this->logger->info('Item Data: ' . print_r($item->getData(), true));
+        // $this->logger->info('QUOTE:: Item Data: ' . print_r($quote->getAllItems(), true));
 
         // Calculate the total quantity in the cart
         $totalQty = 0;
         foreach ($quote->getAllItems() as $cartItem) {
+            // Skip child items (belonging to bundle or configurable)
+            if ($cartItem->getParentItemId()) {
+                continue;
+            }
+
+            if($cartItem->getHasChildren()){
+                $totalQty = $cartItem->getQty();
+                continue;
+            }
+        
+            // Count only the parent item qty (1 bundle = 1 item)
             $totalQty += $cartItem->getQty();
+        
+            // $this->logger->info(sprintf(
+            //     'Counting Parent Item ID %d (SKU: %s): Qty = %d',
+            //     $cartItem->getId(),
+            //     $cartItem->getSku(),
+            //     $cartItem->getQty()
+            // ));
         }
-        $this->logger->info('Total Quantity in Cart: ' . $totalQty);
+        // $this->logger->info('QUOTE:: Total Quantity in Cart: ' . $totalQty);
 
         // Revert the item quantity if total quantity exceeds allowed maximum
         if ($totalQty > $this->maxAllowedQty) {
             $originalQty = $item->getOrigData('qty');
             $item->setQty($originalQty);
             $this->messageManager->addErrorMessage(
-                __('You can only have a maximum of %1 items in your cart.', $this->maxAllowedQty)
+                __('Quote You can only have a maximum of %1 items in your cart.', $this->maxAllowedQty)
             );
         }
 
