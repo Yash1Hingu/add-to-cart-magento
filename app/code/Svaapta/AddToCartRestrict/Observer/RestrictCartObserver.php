@@ -112,22 +112,47 @@ class RestrictCartObserver implements ObserverInterface
         $product = $observer->getEvent()->getProduct();
         $quote = $this->cart->getQuote();
         $allowedQtyLimit = 5;
-        $this->logger->info('Product ID: ' . $product->getId());
+
+        // $this->logger->info('Product ID: ' . $product->getId());
         
-        // log the product data
         
         $productQty = isset($observer->getEvent()->getData()['info']['qty']) ? (int) $observer->getEvent()->getData()['info']['qty'] : 1;
 
-        $this->logger->info('Product Data: ' . print_r($observer->getEvent()->getInfo(), true));
+        $this->logger->info('Product Data: ' . print_r($observer->getEvent()->getProduct()->getTypeInstance()->getAssociatedProducts($product), true));
+
+        // // log length
+        // $this->logger->info('Product Data Length: ' . count($observer->getEvent()->getProduct()->getTypeInstance()->getAssociatedProducts($product)));
+
+
+        // is group product qty
+        // Check if 'info' contains 'super_group' (which holds child product IDs and their quantities)
+        if (isset($eventData['info']['super_group']) && is_array($eventData['info']['super_group'])) {
+            $groupedItemsQty = $eventData['info']['super_group'];
+
+            // Log each product ID and its quantity
+            foreach ($groupedItemsQty as $productId => $qty) {
+                $this->logger->info("Grouped Product ID: $productId, Quantity: $qty");
+            }
+
+            // Calculate total quantity of all items in the grouped product
+            $productQty = array_sum($groupedItemsQty);
+            $this->logger->info('Total Quantity of Grouped Products in Cart: ' . $productQty);
+        }
+        // Check if the product is a grouped product and get the associated products
+        if(count($observer->getEvent()->getProduct()->getTypeInstance()->getAssociatedProducts($product))){
+            $productQty = count($observer->getEvent()->getProduct()->getTypeInstance()->getAssociatedProducts($product));
+        }
+
+
         // log the product qty
-        $this->logger->info('Product Qty: ' . $productQty);
+        // $this->logger->info('Product Qty: ' . $productQty);
 
         // Check if the current user is in the restricted group (e.g., Guest or General)
         $customerGroupId = $this->customerSession->getCustomerGroupId();
         $restrictedGroups = [0, 1]; // Example: 0 - Guest, 1 - General Customer Group
         
         
-        $this->logger->info('Customer Group ID: ' . $customerGroupId);
+        // $this->logger->info('Customer Group ID: ' . $customerGroupId);
         
         if (in_array($customerGroupId, $restrictedGroups)) {
             // Calculate the total quantity in the cart
@@ -144,10 +169,10 @@ class RestrictCartObserver implements ObserverInterface
                 );
 
                 // Optionally, throw an exception or revert changes
-                throw new LocalizedException(__('You cannot add Product.'));
+                throw new CartUpdateRestrictionException(__('You cannot add Product.'));
             }
 
-            $this->logger->info('Current Cart Quantity: ' . $currentQty);
+            // $this->logger->info('Current Cart Quantity: ' . $currentQty);
         }
     }
 
