@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+        xsi:noNamespaceSchemaLocation="urn:magento:framework/Event/etc/events.xsd">
+
+    <!-- Log Order Placement -->
+    <event name="sales_order_place_after">
+        <observer name="svaapta_order_place_after_logger" 
+                  instance="Svaapta\AddToCartRestrict\Observer\OrderPlaceAfter" />
+    </event>
+
+    <!-- Observe when cart items are updated -->
+    <event name="checkout_cart_update_items_after">
+        <observer name="restrict_cart_observer" 
+                  instance="Svaapta\AddToCartRestrict\Observer\RestrictCartObserver" />
+    </event>
+
+    <!-- Restrict Direct Add-To-Cart -->
+    <event name="checkout_cart_product_add_before">
+        <observer name="restrict_cart_observer" 
+                  instance="Svaapta\AddToCartRestrict\Observer\RestrictCartObserver" />
+    </event>
+
+    <!-- Restrict Quantity Updates -->
+    <event name="sales_quote_item_qty_set_after">
+        <observer name="restrict_cart_observer" 
+                  instance="Svaapta\AddToCartRestrict\Observer\RestrictCartObserver" />
+    </event>
+
+</config>

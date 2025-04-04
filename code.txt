@@ -1,0 +1,136 @@
+<?php
+namespace Svaapta\AddToCartRestrict\Observer;
+
+use Magento\Framework\Event\Observer;
+use Magento\Framework\Event\ObserverInterface;
+use Magento\Checkout\Model\Cart;
+use Magento\Framework\Message\ManagerInterface;
+use Magento\Customer\Model\Session as CustomerSession;
+use Svaapta\AddToCartRestrict\Exception\CartUpdateRestrictionException;
+use Svaapta\AddToCartRestrict\Logger\Logger;
+
+class RestrictCartObserver implements ObserverInterface
+{
+    protected $logger;
+    protected $messageManager;
+    protected $customerSession;
+    protected $cart;
+
+    private $maxAllowedQty = 5; // Maximum cart quantity
+    private $restrictedGroups = [0, 1]; // Guest & General customers
+
+    public function __construct(
+        Logger $logger,
+        ManagerInterface $messageManager,
+        CustomerSession $customerSession,
+        Cart $cart
+    ) {
+        $this->logger = $logger;
+        $this->messageManager = $messageManager;
+        $this->customerSession = $customerSession;
+        $this->cart = $cart;
+    }
+
+    /**
+     * Execute observer logic for both add and update cart actions.
+     */
+    public function execute(Observer $observer)
+    {
+        $this->logger->info('Cart Observer Triggered.');
+
+        $event = $observer->getEvent();
+        $quote = $this->cart->getQuote();
+
+        $customerGroupId = $this->customerSession->getCustomerGroupId();
+        $this->logger->info('Customer Group ID: ' . $customerGroupId);
+
+        if (in_array($customerGroupId, $this->restrictedGroups)) {
+            $this->logger->info('Restricted Customer Group ID: ' . $customerGroupId);
+       
+            // Handle direct add-to-cart and quantity entry
+            if ($event->getProduct()) {
+                $this->logger->info('Processing Add-To-Cart Event.');
+                return $this->handleAddToCart($event, $quote);
+            }
+
+            // Handle cart update event
+            if ($event->getCart()) {
+                $this->logger->info('Processing Cart Update Event.');
+                return $this->handleCartUpdate($event->getCart()->getQuote(), $event->getInfo());
+            }
+        }
+    }
+
+    /**
+     * Handle Add-To-Cart restrictions.
+     */
+    private function handleAddToCart($event, $quote)
+    {
+        $this->logger->info('Processing Add-To-Cart Restriction.');
+        // $this->logger->info('Observer Cart Data: ' . print_r($event->getQuoteItem()->getParam('qty'), true));
+
+        $product = $event->getProduct();
+        $request = $event->getQuoteItem();
+        $enteredQty = $request['qty']; // Get entered quantity or default to 1
+        $this->logger->info('Processing Add-To-Cart for Product ID: ' . $product->getId() . ' with Qty: ' . $enteredQty);
+
+        // $this->logger->info('Quote in Cart Item 0: ' . $quote->getItemById(0)->getQty());
+        // Calculate total quantity in the cart
+        $totalQty = array_sum(array_map(fn($item) => $item->getQty(), $quote->getAllItems()));
+
+        // log all items in the cart
+        $this->logger->info('Current Cart Items: ' . print_r($quote->getAllItems(), true));
+
+        if ($totalQty > $this->maxAllowedQty) {
+            $this->logger->info('Cart Limit Exceeded. Current Qty: ' . $totalQty . ', Entered Qty: ' . $enteredQty);
+            $this->messageManager->addWarningMessage(__('You cannot add more than %1 items to your cart.', $this->maxAllowedQty));
+            throw new CartUpdateRestrictionException(__('Cart limit exceeded.'));
+        }
+    }
+
+    /**
+     * Handle Cart Update restrictions.
+     */
+    private function handleCartUpdate($quote, $info)
+    {
+        $this->logger->info('Processing Cart Update Restriction.');
+
+        // Extract the item ID being updated
+        $itemId = array_key_first($info);
+        
+        if (!isset($info[$itemId]['qty'])) {
+            $this->logger->info('Invalid item data in cart update.');
+            return;
+        }
+
+        $newQty = (int)$info[$itemId]['qty']; // New quantity user is trying to set
+
+        // Get the item from the quote
+        $item = $quote->getItemById($itemId);
+        if (!$item) {
+            $this->logger->info('Item not found in quote.');
+            return;
+        }
+
+        // Calculate current total cart quantity excluding the item being updated
+        $currentQty = 0;
+        foreach ($quote->getAllItems() as $cartItem) {
+            if ($cartItem->getId() != $itemId) {
+                $currentQty += (int)$cartItem->getQty();
+            }
+        }
+
+        // Check if the total quantity exceeds the maximum allowed
+        if (($currentQty + $newQty) > $this->maxAllowedQty) {
+            $this->messageManager->addWarningMessage(__('You can only have a maximum of %1 items in your cart.', $this->maxAllowedQty));
+            
+            // Reset item quantity to original
+            $item->setQty($item->getOrigData('qty'));
+
+            self::$isProcessing = false;
+
+            throw new CartUpdateRestrictionException(__('Cart quantity limit exceeded.'));
+        }
+    }
+
+}

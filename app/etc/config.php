@@ -363,7 +363,8 @@ return [
         'PayPal_BraintreeGraphQl' => 1,
         'Sparsh_QuickView' => 1,
         'Sparsh_WhatsAppChat' => 1,
-        'Svaapta_RestrictCart' => 1,
+        'Svaapta_AddToCartRestrict' => 1,
+        'Svaapta_RestrictCart' => 0,
         'Swissup_Breeze' => 1,
         'Swissup_BreezeIntegrations' => 1,
         'Swissup_Rtl' => 1
