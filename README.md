@@ -85,45 +85,10 @@ The three key methods (`handleAddToCart`, `handleCartUpdate`, and `handleQuoteIt
 ### **1. Calculating Total Cart Quantity**
 The total cart quantity is calculated by iterating through all items in the cart and summing their quantities. This logic is used in all three methods.
 
-#### Code Snippet:
-```php
-
-    $totalQty = 0;
-
-    foreach ($quote->getAllItems() as $cartItem) {
-        // Skip child items (belonging to bundle or configurable products)
-        if ($cartItem->getParentItemId()) {
-            continue;
-        }
-
-        // Optionally exclude a specific item (used in cart updates)
-        if ($excludeItemId && $cartItem->getId() == $excludeItemId) {
-            continue;
-        }
-
-        $totalQty += $cartItem->getQty();
-    }
-
-```
 
 ### **2. Validating Cart Quantity Restrictions**
 The validation logic checks if the total cart quantity exceeds the maximum allowed quantity. If the limit is exceeded, it logs the error, displays a warning message to the user, and throws a custom exception.
 
-#### Code Snippet:
-```php
-
-    if (($currentQty + $newQty) > $this->maxAllowedQty) {
-        $this->logger->info('Cart Limit Exceeded. Current Qty: ' . $currentQty . ', New Qty: ' . $newQty);
-
-        $this->messageManager->addWarningMessage(
-            __('You cannot add more than %1 items to your cart.', $this->maxAllowedQty)
-        );
-
-        throw new CartUpdateRestrictionException(__('Cart quantity limit exceeded.'));
-    }
-```
-
----
 
 ## **Key Methods**
 
