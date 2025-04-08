@@ -1,161 +1,177 @@
-# **Svaapta_AddToCartRestrict Module**
+# Svaapta AddToCartRestrict Extension Documentation
 
-## **Overview**
-The `Svaapta_AddToCartRestrict` module is designed to restrict the quantity of items that can be added to the cart for specific customer groups in a Magento 2 store. It ensures that customers in restricted groups cannot exceed a predefined maximum cart quantity.
+## Overview
 
----
+The AddToCartRestrict extension allows store administrators to set maximum quantity limits for adding products to the shopping cart. This extension enables you to restrict the maximum quantity of items that can be added to the cart based on customer groups, providing better control over product ordering.
 
-## **Features**
-1. Restricts the total quantity of items in the cart for specific customer groups.
-2. Handles the following scenarios:
-   - Adding a product to the cart for the first or second time.
-   - Updating product quantity from a modal.
-   - Updating the cart from the cart page.
-3. Provides customizable maximum quantity limits.
-4. Implements a custom logger for detailed debugging and monitoring.
-5. Throws custom exceptions for better error handling and debugging.
-6. Displays user-friendly error messages when restrictions are violated.
-7. Uses common logic for calculating total cart quantity and validating restrictions.
+## Features
 
----
+- Enable/disable extension functionality
+- Set maximum allowed quantity for cart items
+- Apply restrictions to specific customer groups
+- Fully configurable through Magento admin panel
+- Works with all product types including simple, configurable, grouped, and bundle products
+- Prevents cart updates that would exceed quantity limits
+- Detailed logging for troubleshooting
 
-## **Installation**
+## Installation
 
-### **Step 1: Enable Developer Mode**
-Run the following command to enable developer mode:
-```bash
-php bin/magento deploy:mode:set developer
+### Requirements
+- Magento 2.x
+- PHP 7.x or higher
+
+### Installation Steps
+1. Upload the extension files to `app/code/Svaapta/AddToCartRestrict`
+2. Run the following Magento CLI commands:
 ```
-
-### **Step 2: Copy the Module Files**
-Place the module files in the following directory:
-```
-app/code/Svaapta/AddToCartRestrict
-```
-
-### **Step 3: Enable the Module**
-Run the following commands to enable the module:
-```bash
-php bin/magento module:enable Svaapta_AddToCartRestrict
 php bin/magento setup:upgrade
 php bin/magento setup:di:compile
+php bin/magento setup:static-content:deploy -f
 php bin/magento cache:flush
 ```
 
----
+## Configuration
 
-## **Configuration**
+After installing the extension, you can configure it through the Magento admin panel:
 
-### **1. Maximum Allowed Quantity**
-The maximum allowed quantity is defined in the `RestrictCartObserver` class as a private property:
-```php
-private $maxAllowedQty = 5;
+1. Log in to your Magento admin panel
+2. Navigate to **Svaapta Extensions > Add To Cart Restrict > Configuration**
+   (Alternatively, go to **Stores > Configuration > Svaapta Extensions > Add To Cart Restrict**)
+
+### Configuration Options
+
+#### General Configuration
+
+| Option | Description |
+|--------|-------------|
+| Enable Extension | Enable or disable the extension functionality (Yes/No) |
+| Maximum Allowed Quantity | Set the maximum quantity that a customer can add to cart (numeric value, greater than zero) |
+| Apply To Customer Groups | Select customer groups to which the cart quantity restrictions will apply |
+
+## Permission Management
+
+The extension uses Magento's ACL (Access Control List) system to manage permissions. The following permissions are available:
+
+- **Add To Cart Restrict > Configuration**: Controls access to the extension configuration
+- **Stores > Configuration > Add To Cart Restrict Section**: Controls access to the extension section in store configuration
+
+To manage these permissions:
+1. Go to **System > Permissions > User Roles**
+2. Select or create a role
+3. In the Role Resources tab, select the appropriate permissions for the role
+
+## Default Configuration
+
+The extension comes with the following default configuration:
+
+- Enabled: No
+- Maximum Allowed Quantity: 10
+- Customer Groups: All groups (0,1,2,3)
+
+## Technical Structure
+
+The extension has the following structure:
+
 ```
-You can modify this value to set a different limit.
-
-### **2. Restricted Customer Groups**
-The restricted customer groups are defined as an array in the `RestrictCartObserver` class:
-```php
-private $restrictedGroups = [0, 1]; // Guest and General customer groups
-```
-You can update this array to include other customer group IDs.
-
----
-
-## **Observer Details**
-
-### **Observer Class**
-The main observer class is located at:
-```
-app/code/Svaapta/AddToCartRestrict/Observer/RestrictCartObserver.php
-```
-
-### **Events Observed**
-The module listens to the following events:
-1. **Add to Cart Event**: Restricts adding products to the cart if the total quantity exceeds the limit.
-2. **Cart Update Event**: Restricts updating cart quantities from the cart page.
-3. **Quote Item Update Event**: Restricts updating product quantities from a modal.
-
----
-
-## **Common Logic in Key Methods**
-
-The three key methods (`handleAddToCart`, `handleCartUpdate`, and `handleQuoteItemUpdate`) share common logic for calculating the total cart quantity and validating restrictions. This ensures consistency and reduces code duplication.
-
-### **1. Calculating Total Cart Quantity**
-The total cart quantity is calculated by iterating through all items in the cart and summing their quantities. This logic is used in all three methods.
-
-
-### **2. Validating Cart Quantity Restrictions**
-The validation logic checks if the total cart quantity exceeds the maximum allowed quantity. If the limit is exceeded, it logs the error, displays a warning message to the user, and throws a custom exception.
-
-
-## **Key Methods**
-
-### **1. `handleAddToCart`**
-Handles restrictions when a product is added to the cart. It uses the common logic to calculate the total cart quantity and validate restrictions.
-
----
-
-### **2. `handleCartUpdate`**
-Handles restrictions when the cart is updated from the cart page. It uses the common logic to calculate the total cart quantity (excluding the item being updated) and validate restrictions.
-
----
-
-### **3. `handleQuoteItemUpdate`**
-Handles restrictions when a product quantity is updated from a modal. It uses the common logic to calculate the total cart quantity and validate restrictions.
-
----
-
-## **Custom Logger**
-
-The module uses a custom logger to log all cart-related events for debugging and monitoring purposes. Logs are stored in the Magento log files (e.g., `var/log/svaapta_restrict_cart.log`).
-
----
-
-## **Custom Exceptions**
-
-The module uses a custom exception class, `CartUpdateRestrictionException`, to handle cart restriction errors. This ensures that errors are properly logged and displayed to the user.
-
----
-
-## **Uninstallation**
-
-### **Step 1: Disable the Module**
-Run the following command to disable the module:
-```bash
-php bin/magento module:disable Svaapta_AddToCartRestrict
+Svaapta_AddToCartRestrict/
+├── etc/
+│   ├── adminhtml/
+│   │   ├── menu.xml          # Admin menu configuration
+│   │   └── system.xml        # System configuration settings
+│   ├── acl.xml               # Access Control List definitions
+│   ├── config.xml            # Default configuration values
+│   └── events.xml            # Event observer configurations
+├── Model/
+│   └── Config/
+│       └── Source/
+│           └── Multiselect.php   # Source model for customer groups
+├── Observer/
+│   ├── OrderPlaceAfter.php       # Observer for post-order actions
+│   └── RestrictCartObserver.php  # Observer for cart restriction logic
+├── Exception/
+│   └── CartUpdateRestrictionException.php  # Custom exception handling
+├── Helper/
+│   └── Data.php              # Helper functions for the module
+├── Logger/
+│   └── Handler.php           # Logging handler
+│   └── Logger.php            # Logger implementation
+└── view/
+    └── adminhtml/
+        └── web/
+            ├── css/
+            │   └── menu-icons.css  # CSS for admin menu icons
+            ├── images/
+            │   └── icon.svg        # Icon for the extension
+            └── layout/
+                └── default.xml     # Admin layout customization
 ```
 
-### **Step 2: Remove the Module Files**
-Delete the module directory:
-```
-rm -rf app/code/Svaapta/AddToCartRestrict
-```
+## Cart Restriction Logic
 
-### **Step 3: Clean Up**
-Run the following commands to clean up:
-```bash
-php bin/magento setup:upgrade
-php bin/magento setup:di:compile
-php bin/magento cache:flush
-```
+When a customer attempts to add products to the cart:
+
+1. The extension checks if it is enabled
+2. It verifies if the customer belongs to a restricted group
+3. It calculates the total quantity of items in the cart
+4. If the new total would exceed the maximum allowed quantity, the action is restricted and an error message is displayed
+
+### RestrictCartObserver
+
+The `RestrictCartObserver` class is the core component responsible for implementing the cart restriction logic. It:
+
+- Observes multiple cart-related events to ensure complete coverage
+- Handles different product types (simple, configurable, grouped, bundle)
+- Correctly calculates quantities for parent and child items
+- Prevents recursive processing when multiple events are triggered
+- Provides detailed logs for troubleshooting
+
+### Event Handling
+
+The extension listens to the following Magento events:
+
+| Event | Purpose |
+|-------|---------|
+| `checkout_cart_product_add_before` | Intercepts product addition to cart before it happens |
+| `checkout_cart_update_items_after` | Monitors updates to cart items |
+| `sales_quote_item_qty_set_after` | Tracks quantity changes to quote items |
+| `sales_order_place_after` | Optional logging of successful order placement |
+
+## Handling Different Product Types
+
+The extension is designed to work correctly with all Magento product types:
+
+- **Simple Products**: Direct quantity counting
+- **Configurable Products**: Counts parent items only to avoid double-counting
+- **Grouped Products**: Counts total quantity of all items in the group
+- **Bundle Products**: Treats each bundle as a single item regardless of contents
+
+## Exception Handling
+
+The module uses a custom exception class (`CartUpdateRestrictionException`) to gracefully handle restriction violations, displaying user-friendly messages while preventing cart updates that would exceed the configured limits.
+
+
+## Compatibility
+
+This extension is compatible with:
+- Magento Open Source: 2.3.x, 2.4.x
+- Magento Commerce: 2.3.x, 2.4.x
+
+## Troubleshooting
+
+If you encounter issues with the extension:
+
+1. Check if the extension is enabled in the admin configuration
+2. Verify that the customer groups are correctly set
+3. Review the Magento logs for detailed information about restriction events
+4. Clear the Magento cache and try again
+
+## Changelog
+
+**Version 1.0.0**
+- Initial release with basic quantity restriction functionality
+- Customer group filtering
+- Admin configuration
+- Support for all product types
+- Detailed logging system
 
 ---
-
-## **Support**
-For any issues or questions regarding this module, please contact the development team at **yash23hingu@gmail.com**.
-
----
-
-## **Changelog**
-
-### **Version 1.0.0**
-- Initial release of the module.
-- Added support for cart quantity restrictions for specific customer groups.
-- Implemented custom logger and exception handling.
-- Added user-friendly error messages.
-
----
-
-This `README.md` file provides a comprehensive guide to installing, configuring, and using the `Svaapta_AddToCartRestrict` module, including details about the common logic, custom logger, and exception handling.
