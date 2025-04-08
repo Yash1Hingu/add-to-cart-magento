@@ -22,7 +22,7 @@
                 </field>
                 <field id="customer_groups" translate="label" type="multiselect" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Apply To Customer Groups</label>
-                    <source_model>Magento\Customer\Model\Config\Source\Group\Multiselect</source_model>
+                    <source_model>Svaapta\AddToCartRestrict\Model\Config\Source\Multiselect</source_model>
                     <comment>Select customer groups for which restrictions apply</comment>
                 </field>
             </group>

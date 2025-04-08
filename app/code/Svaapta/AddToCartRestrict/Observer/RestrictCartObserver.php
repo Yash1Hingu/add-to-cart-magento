@@ -82,16 +82,16 @@ class RestrictCartObserver implements ObserverInterface
         //log
         
         $this->restrictedGroups = $this->configHelper->getCustomerGroups();
-        $this->logger->info('Extension is enabled.');
+        // $this->logger->info('Extension is enabled.');
         // log rGroups
-        $this->logger->info('Restricted Customer Groups: ' . implode(',', $this->restrictedGroups));
+        // $this->logger->info('Restricted Customer Groups: ' . implode(',', $this->restrictedGroups));
 
         $event = $observer->getEvent();
         $customerGroupId = $this->customerSession->getCustomerGroupId();
 
         $this->maxAllowedQty = $this->configHelper->getMaxAllowedQty();
         // log maxAllowedQty
-        $this->logger->info('Max Allowed Quantity: ' . $this->maxAllowedQty);
+        // $this->logger->info('Max Allowed Quantity: ' . $this->maxAllowedQty);
 
         // Skip restriction logic if customer group is not restricted
         if (!in_array($customerGroupId, $this->restrictedGroups)) {
@@ -190,11 +190,11 @@ class RestrictCartObserver implements ObserverInterface
         // Check if the new addition will exceed the allowed limit
         if ($currentQty + $productQty > $allowedQtyLimit) {
             // Prevent adding the item to the cart
-            $this->messageManager->addWarningMessage(
-                __('You cannot add more than 5 items to your cart.')
-            );
+            // $this->messageManager->addWarningMessage(
+            //     __('You can only have a maximum of %1 items in your cart.', $this->maxAllowedQty)
+            // );
             // Optionally, throw an exception or revert changes
-            throw new CartUpdateRestrictionException(__('You cannot add Product.'));
+            throw new CartUpdateRestrictionException(__('You can only have a maximum of %1 items in your cart.', $this->maxAllowedQty));
         }
         // $this->logger->info('Current Cart Quantity: ' . $currentQty);
     }
@@ -223,7 +223,7 @@ class RestrictCartObserver implements ObserverInterface
         // $this->logger->info('UO:: Item ID: ' . $itemId);
 
         // Apply restriction logic for allowed customer groups (Guest and General)
-        $this->logger->info('Applying cart update restrictions.');
+        // $this->logger->info('Applying cart update restrictions.');
         $currentQty = 0;
         $originalQty = 0;
         // Calculate total quantity excluding the item being updated
@@ -236,7 +236,7 @@ class RestrictCartObserver implements ObserverInterface
                 }
                 
                 if($item->getHasChildren()){
-                    $totalQty = $item->getQty();
+                    $currentQty += $item->getQty();
                     continue;
                 }
                 
@@ -244,7 +244,7 @@ class RestrictCartObserver implements ObserverInterface
                 $currentQty += $item->getQty();
             }
         }
-        $this->logger->info('UO:: Total Qty from other items: ' . $currentQty);
+        // $this->logger->info('UO:: Total Qty from other items: ' . $currentQty);
         // Prevent update if total quantity would exceed the maximum allowed
         if ($currentQty + $newQty > $this->maxAllowedQty) {
             $this->messageManager->addWarningMessage(
