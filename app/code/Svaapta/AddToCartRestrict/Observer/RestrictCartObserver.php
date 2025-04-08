@@ -8,6 +8,7 @@ use Magento\Framework\Message\ManagerInterface;
 use Magento\Customer\Model\Session as CustomerSession;
 use Svaapta\AddToCartRestrict\Exception\CartUpdateRestrictionException;
 use Svaapta\AddToCartRestrict\Logger\Logger;
+use Svaapta\AddToCartRestrict\Helper\Data as ConfigHelper;
 
 /**
  * Observer class to restrict cart quantity for certain customer groups.
@@ -25,6 +26,9 @@ class RestrictCartObserver implements ObserverInterface
 
     /** @var Cart */
     protected $cart;
+
+    /** @var ConfigHelper */
+    protected $configHelper;
 
     /** @var int Maximum allowed quantity in the cart */
     private $maxAllowedQty = 5;
@@ -47,12 +51,14 @@ class RestrictCartObserver implements ObserverInterface
         Logger $logger,
         ManagerInterface $messageManager,
         CustomerSession $customerSession,
-        Cart $cart
+        Cart $cart,
+        ConfigHelper $configHelper
     ) {
         $this->logger = $logger;
         $this->messageManager = $messageManager;
         $this->customerSession = $customerSession;
         $this->cart = $cart;
+        $this->configHelper = $configHelper;
     }
 
     /**
@@ -68,8 +74,24 @@ class RestrictCartObserver implements ObserverInterface
     {
         $this->logger->info('Cart Observer Triggered.');
 
+        // Check if extension is enabled
+        if (!$this->configHelper->isEnabled()) {
+            return;
+        }
+
+        //log
+        
+        $this->restrictedGroups = $this->configHelper->getCustomerGroups();
+        $this->logger->info('Extension is enabled.');
+        // log rGroups
+        $this->logger->info('Restricted Customer Groups: ' . implode(',', $this->restrictedGroups));
+
         $event = $observer->getEvent();
         $customerGroupId = $this->customerSession->getCustomerGroupId();
+
+        $this->maxAllowedQty = $this->configHelper->getMaxAllowedQty();
+        // log maxAllowedQty
+        $this->logger->info('Max Allowed Quantity: ' . $this->maxAllowedQty);
 
         // Skip restriction logic if customer group is not restricted
         if (!in_array($customerGroupId, $this->restrictedGroups)) {
@@ -111,7 +133,7 @@ class RestrictCartObserver implements ObserverInterface
 
         $product = $observer->getEvent()->getProduct();
         $quote = $this->cart->getQuote();
-        $allowedQtyLimit = 5;
+        $allowedQtyLimit = $this->maxAllowedQty;
 
         // $this->logger->info('Product ID: ' . $product->getId());
         

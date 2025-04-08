@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <addtocartrestrict>
+            <general>
+                <enabled>0</enabled>
+                <max_allowed_qty>10</max_allowed_qty>
+                <customer_groups>0,1,2,3</customer_groups>
+            </general>
+        </addtocartrestrict>
+    </default>
+</config>

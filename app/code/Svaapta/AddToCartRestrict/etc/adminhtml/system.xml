@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="svaapta" translate="label" sortOrder="100">
+            <label>Svaapta Extensions</label>
+        </tab>
+        <section id="addtocartrestrict" translate="label" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="1">
+            <class>separator-top</class>
+            <label>Add To Cart Restrict</label>
+            <tab>svaapta</tab>
+            <resource>Svaapta_AddToCartRestrict::config</resource>
+            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>General Configuration</label>
+                <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable Extension</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="max_allowed_qty" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Maximum Allowed Quantity</label>
+                    <validate>validate-number validate-greater-than-zero</validate>
+                    <comment>Set the maximum quantity that can be added to cart</comment>
+                </field>
+                <field id="customer_groups" translate="label" type="multiselect" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Apply To Customer Groups</label>
+                    <source_model>Magento\Customer\Model\Config\Source\Group\Multiselect</source_model>
+                    <comment>Select customer groups for which restrictions apply</comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

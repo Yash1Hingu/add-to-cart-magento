@@ -1,0 +1,7 @@
+.admin__menu #menu-svaapta-addtocartrestrict-menu > a:before {
+    content: '';
+    background-image: url('../images/icon.svg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}

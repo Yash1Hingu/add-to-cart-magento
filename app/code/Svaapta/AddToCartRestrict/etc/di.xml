@@ -26,6 +26,7 @@
             <argument name="messageManager" xsi:type="object">Magento\Framework\Message\ManagerInterface</argument>
             <argument name="customerSession" xsi:type="object">Magento\Customer\Model\Session</argument>
             <argument name="cart" xsi:type="object">Magento\Checkout\Model\Cart</argument>
+            <argument name="configHelper" xsi:type="object">Svaapta\AddToCartRestrict\Helper\Data</argument>
         </arguments>
     </type>
 

@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Svaapta_AddToCartRestrict::menu" 
+             title="Add To Cart Restrict" 
+             module="Svaapta_AddToCartRestrict" 
+             sortOrder="100" 
+             resource="Svaapta_AddToCartRestrict::menu" />
+             
+        <add id="Svaapta_AddToCartRestrict::submenu" 
+             title="Configuration" 
+             module="Svaapta_AddToCartRestrict" 
+             sortOrder="10" 
+             parent="Svaapta_AddToCartRestrict::menu" 
+             action="adminhtml/system_config/edit/section/addtocartrestrict"
+             resource="Svaapta_AddToCartRestrict::submenu" />
+    </menu>
+</config>
